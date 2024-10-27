@@ -3,6 +3,17 @@ import requests
 from lxml import etree
 from datetime import datetime, timedelta
 
+# Lista completa das placas com suspensor de eixos no formato fornecido
+placas_suspensor = [
+    "GHB1B84", "GHO0H65", "GJL7C45", "GCI0I94", "GIE5D75", "GDW8E68",
+    "GHM3H15", "GHA2A44", "GGQ0E23", "GEV3J57", "GBD8F51", "GBT6J97",
+    "GBV8C54", "GDW4J22", "GCQ8I34", "GCR4H22", "GDR0J83", "GFP6H82",
+    "GII4G01", "GCP2G73", "GHL3A66", "GHY0D77", "GFC2B18", "GIS9A85",
+    "GGS6G25", "GAN8H82", "GAQ2C35", "GAW3J94", "GDW8E56", "GEH7E88",
+    "GEP2F46", "GEP4B98", "GFD0J27", "GFI4G06", "GGQ1C73", "GHL8I11",
+    "GHS1H44"
+]
+
 # ---- Verificação de Senha ----
 # Crie uma senha para proteger a aplicação
 senha = "Bracell@258"  # Substitua por uma senha segura
@@ -12,6 +23,9 @@ password = st.text_input("Digite a senha para acessar:", type="password")
 
 # Se a senha estiver correta, o resto da aplicação é mostrado
 if password == senha:
+    
+    
+
 
     # Função para remover namespaces do XML
     def remove_namespaces(tree):
@@ -97,23 +111,26 @@ if password == senha:
         if conjunto == 'Bitrem':
             nEixosIda = 4
             nEixosVolta = 7
-        elif conjunto == 'Tritrem':
-            nEixosIda = 6
-            nEixosVolta = 9
-        elif conjunto == 'Cargo Polo (5 eixos ida)':
+        elif conjunto == 'Bitrem_5':
             nEixosIda = 5
-            nEixosVolta = 9
-        elif conjunto == 'Cargo Polo (6 eixos ida)':
-            nEixosIda = 6
+            nEixosVolta = 7
+        elif conjunto == 'Tritrem':
+            # Verifica se a placa está na lista de placas com suspensor de eixos
+            if placa in placas_suspensor:
+                nEixosIda = 5
+            else:
+                nEixosIda = 6
             nEixosVolta = 9
         else:
             st.error("Tipo de conjunto não reconhecido.")
             return
 
+        # Configurar rotas de ida e volta
         rotas = [
             {'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'},
         ]
 
+        # Percorrer cada rota e processar as viagens de ida e volta
         for rota in rotas:
             numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
             if numero_viagem_ida:
@@ -128,6 +145,8 @@ if password == senha:
                 st.error(f"Falha na compra da viagem de volta para {rota['volta']}")
 
         st.success("Processo de compra e impressão de recibo concluído.")
+
+
 
     # Função para comprar viagem
     def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia, itemFin1=None, itemFin2=None, itemFin3=None):
@@ -215,14 +234,14 @@ if password == senha:
     # Interface Streamlit
     st.title("Formulário de Vale Pedágio")
 
+    # Campos de entrada
     placa = st.text_input("Placa:")
     fazenda = st.text_input("Fazenda:")
-    conjunto = st.selectbox("Conjunto:", ["Bitrem", "Tritrem", "Cargo Polo (5 eixos ida)", "Cargo Polo (6 eixos ida)"])
+    conjunto = st.selectbox("Conjunto:", ["Bitrem", "Bitrem_5", "Tritrem"])
 
+    # Botão para processar a viagem
     if st.button("Processar Viagem"):
         if placa and fazenda and conjunto:
             processar_viagem(placa, fazenda, conjunto)
         else:
             st.warning("Por favor, preencha todos os campos!")
-
-
