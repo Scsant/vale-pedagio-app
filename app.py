@@ -258,7 +258,7 @@ if password == SENHA_PRINCIPAL:
             st.warning("Por favor, preencha todos os campos!")
 
     # Área de administração - Protegida por senha adicional
-    with st.expander("Área de Administração - Supervisores Somente"):
+    with st.expander("Área de Administração - Somente Autorizados"):
         senha_admin = st.text_input("Senha para acessar a administração:", type="password", key="admin_password")
         if senha_admin == ADMIN_PASSWORD:
             st.success("Acesso concedido à área de administração.")
