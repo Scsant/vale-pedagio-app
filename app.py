@@ -6,9 +6,45 @@ import requests
 from lxml import etree
 
 # Configurações e constantes
+VALORES_PATH = "valores_pedagio.json"
 FILE_PATH = "placas_grupos.json"
 ADMIN_PASSWORD = "supervisor123"  # Senha para acessar a área de administração
 SENHA_PRINCIPAL = "Bracell@258"  # Senha para acessar a aplicação
+
+# Função para carregar os dados de valores de pedagio
+def carregar_valores():
+    if os.path.exists(VALORES_PATH):
+        with open(VALORES_PATH, "r") as file:
+            return json.load(file)
+    else:
+        return {
+            "Bitrem_4": {"ida": 0.0, "volta": 0.0},
+            "Bitrem_5": {"ida": 0.0, "volta": 0.0},
+            "Tritrem_5": {"ida": 0.0, "volta": 0.0},
+            "Tritrem_6": {"ida": 0.0, "volta": 0.0}
+        }
+
+valores_pedagio = carregar_valores()
+
+# Função para salvar os valores de pedagio
+def salvar_valores(dados):
+    with open(VALORES_PATH, "w") as file:
+        json.dump(dados, file, indent=4)
+
+# Função para determinar os eixos e valores baseados no grupo do caminhão
+def definir_eixos(grupo):
+    valores = valores_pedagio.get(grupo, {"ida": 0.0, "volta": 0.0})
+    if grupo == "Bitrem_4":
+        return 4, 7, valores["ida"], valores["volta"]
+    elif grupo == "Bitrem_5":
+        return 5, 7, valores["ida"], valores["volta"]
+    elif grupo == "Tritrem_5":
+        return 5, 9, valores["ida"], valores["volta"]
+    elif grupo == "Tritrem_6":
+        return 6, 9, valores["ida"], valores["volta"]
+    else:
+        return None, None, None, None
+
 
 
 # Função para carregar os dados de placas de um arquivo JSON
@@ -130,7 +166,7 @@ def processar_viagem(placa, fazenda):
         st.error(f"A placa {placa} não está cadastrada em nenhum grupo.")
         return
 
-    nEixosIda, nEixosVolta = definir_eixos(grupo)
+    nEixosIda, nEixosVolta, valorIda, valorVolta = definir_eixos(grupo)
     if nEixosIda is None or nEixosVolta is None:
         st.error("Erro ao definir os eixos para o grupo.")
         return
@@ -140,12 +176,14 @@ def processar_viagem(placa, fazenda):
     rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
 
     for rota in rotas:
+        st.info(f"Processando rota {rota['ida']} com valor R$ {valorIda:.2f} e {nEixosIda} eixos")
         numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
         if numero_viagem_ida:
             imprimir_recibo(sessao, numero_viagem_ida, True)
         else:
             st.error(f"Falha na compra da viagem de ida para {rota['ida']}")
 
+        st.info(f"Processando rota {rota['volta']} com valor R$ {valorVolta:.2f} e {nEixosVolta} eixos")
         numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
         if numero_viagem_volta:
             imprimir_recibo(sessao, numero_viagem_volta, True)
@@ -153,6 +191,9 @@ def processar_viagem(placa, fazenda):
             st.error(f"Falha na compra da viagem de volta para {rota['volta']}")
 
     st.success("Processo de compra e impressão de recibo concluído.")
+
+
+
 
 # Função para comprar viagem
 def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
@@ -242,6 +283,7 @@ def definir_eixos(grupo):
     else:
         return None, None
         
+
 # Interface Streamlit
 password = st.text_input("Digite a senha para acessar a aplicação:", type="password")
 if password == SENHA_PRINCIPAL:
@@ -301,6 +343,21 @@ if password == SENHA_PRINCIPAL:
                         st.success("Placas removidas com sucesso!")
                     else:
                         st.warning("Digite uma ou mais placas para remover.")
+        elif senha_admin:
+            st.error("Senha incorreta para a área de administração.")
+else:
+    st.warning("Por favor, insira a senha para acessar a aplicação.")
+
+
+            st.subheader("Configurar Valores de Pedágio")
+            for grupo, valores in valores_pedagio.items():
+                st.write(f"Grupo {grupo}")
+                valores["ida"] = st.number_input(f"Valor de ida para {grupo}:", value=valores["ida"], step=0.01, key=f"ida_{grupo}")
+                valores["volta"] = st.number_input(f"Valor de volta para {grupo}:", value=valores["volta"], step=0.01, key=f"volta_{grupo}")
+
+            if st.button("Salvar Valores"):
+                salvar_valores(valores_pedagio)
+                st.success("Valores de pedágio atualizados com sucesso!")
         elif senha_admin:
             st.error("Senha incorreta para a área de administração.")
 else:
