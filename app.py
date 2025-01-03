@@ -6,45 +6,9 @@ import requests
 from lxml import etree
 
 # Configurações e constantes
-VALORES_PATH = "valores_pedagio.json"
 FILE_PATH = "placas_grupos.json"
 ADMIN_PASSWORD = "supervisor123"  # Senha para acessar a área de administração
 SENHA_PRINCIPAL = "Bracell@258"  # Senha para acessar a aplicação
-
-# Função para carregar os dados de valores de pedagio
-def carregar_valores():
-    if os.path.exists(VALORES_PATH):
-        with open(VALORES_PATH, "r") as file:
-            return json.load(file)
-    else:
-        return {
-            "Bitrem_4": {"ida": 0.0, "volta": 0.0},
-            "Bitrem_5": {"ida": 0.0, "volta": 0.0},
-            "Tritrem_5": {"ida": 0.0, "volta": 0.0},
-            "Tritrem_6": {"ida": 0.0, "volta": 0.0}
-        }
-
-valores_pedagio = carregar_valores()
-
-# Função para salvar os valores de pedagio
-def salvar_valores(dados):
-    with open(VALORES_PATH, "w") as file:
-        json.dump(dados, file, indent=4)
-
-# Função para determinar os eixos e valores baseados no grupo do caminhão
-def definir_eixos(grupo):
-    valores = valores_pedagio.get(grupo, {"ida": 0.0, "volta": 0.0})
-    if grupo == "Bitrem_4":
-        return 4, 7, valores["ida"], valores["volta"]
-    elif grupo == "Bitrem_5":
-        return 5, 7, valores["ida"], valores["volta"]
-    elif grupo == "Tritrem_5":
-        return 5, 9, valores["ida"], valores["volta"]
-    elif grupo == "Tritrem_6":
-        return 6, 9, valores["ida"], valores["volta"]
-    else:
-        return None, None, None, None
-
 
 
 # Função para carregar os dados de placas de um arquivo JSON
@@ -99,6 +63,28 @@ def remove_namespaces(tree):
     etree.cleanup_namespaces(tree)
     return tree
 
+def enviar_para_api(data):
+    """
+    Envia os dados do vale-pedágio para a API via POST.
+    """
+    url = "https://pedbracc.onrender.com/api/vale-pedagio/"  # Substitua pela URL da sua API em produção
+    headers = {'Content-Type': 'application/json'}
+
+    try:
+        response = requests.post(url, json=data, headers=headers, verify=False)
+        if response.status_code == 201:
+            st.success("Dados enviados com sucesso para o banco de dados!")
+            st.write(response.json())  # Opcional: exibe a resposta do servidor
+        else:
+            st.error(f"Erro ao enviar dados para a API: {response.status_code}")
+            st.write(response.text)  # Exibe a mensagem de erro do servidor
+    except Exception as e:
+        st.error(f"Erro ao conectar à API: {e}")
+
+
+
+
+
 # Função para autenticar o usuário
 def autenticar_usuario():
     st.write("Autenticando usuário...")
@@ -128,7 +114,8 @@ def autenticar_usuario():
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10)
+        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
+
         response.raise_for_status()
 
         st.write("Resposta SOAP do servidor:")
@@ -166,32 +153,68 @@ def processar_viagem(placa, fazenda):
         st.error(f"A placa {placa} não está cadastrada em nenhum grupo.")
         return
 
-    nEixosIda, nEixosVolta, valorIda, valorVolta = definir_eixos(grupo)
+    nEixosIda, nEixosVolta = definir_eixos(grupo)
     if nEixosIda is None or nEixosVolta is None:
         st.error("Erro ao definir os eixos para o grupo.")
         return
+
 
     inicioVigencia = datetime.today().strftime('%Y-%m-%d')
     fimVigencia = (datetime.today() + timedelta(days=5)).strftime('%Y-%m-%d')
     rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
 
     for rota in rotas:
-        st.info(f"Processando rota {rota['ida']} com valor R$ {valorIda:.2f} e {nEixosIda} eixos")
+        # Obter custo da rota de ida
+        custo_ida = obter_custo_rota(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
+        if 'erro' in custo_ida:
+            st.error(f"Erro ao obter custo da rota de ida ({rota['ida']}): {custo_ida['erro']}")
+            continue
+        else:
+            st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
+
+        # Comprar viagem de ida
         numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
-        if numero_viagem_ida:
-            imprimir_recibo(sessao, numero_viagem_ida, True)
-        else:
+        if not numero_viagem_ida:
             st.error(f"Falha na compra da viagem de ida para {rota['ida']}")
+            continue
 
-        st.info(f"Processando rota {rota['volta']} com valor R$ {valorVolta:.2f} e {nEixosVolta} eixos")
-        numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
-        if numero_viagem_volta:
-            imprimir_recibo(sessao, numero_viagem_volta, True)
+        # Obter custo da rota de volta
+        custo_volta = obter_custo_rota(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
+        if 'erro' in custo_volta:
+            st.error(f"Erro ao obter custo da rota de volta ({rota['volta']}): {custo_volta['erro']}")
+            continue
         else:
+            st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
+
+        # Comprar viagem de volta
+        numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
+        if not numero_viagem_volta:
             st.error(f"Falha na compra da viagem de volta para {rota['volta']}")
+            continue
 
-    st.success("Processo de compra e impressão de recibo concluído.")
+        # Extrair valores numéricos de custos e calcular total
+        custo_pedagio_ida = float(custo_ida['valor']) if 'valor' in custo_ida else 0.0
+        custo_pedagio_volta = float(custo_volta['valor']) if 'valor' in custo_volta else 0.0
+        custo_total = custo_pedagio_ida + custo_pedagio_volta
 
+        # Montar os dados no formato correto (vírgulas para números decimais)
+        data_para_api = {
+            "data_emissao": datetime.now().isoformat(),
+            "placa_caminhao": placa,
+            "fazenda_destino": fazenda,
+            "numero_recibo_ida": numero_viagem_ida,
+            "numero_recibo_volta": numero_viagem_volta,
+            "custo_pedagio_ida": f"{custo_pedagio_ida:.2f}".replace(".", ","),
+            "custo_pedagio_volta": f"{custo_pedagio_volta:.2f}".replace(".", ","),
+            "custo_total": f"{custo_total:.2f}".replace(".", ","),
+            "coordenadas_x": 0,  # Valor padrão para coordenadas X
+            "coordenadas_y": 0   # Valor padrão para coordenadas Y
+        }
+
+        # Enviar os dados para a API
+        enviar_para_api(data_para_api)
+
+    st.success("Processo concluído!")
 
 
 
@@ -224,7 +247,7 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10)
+        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
         response.raise_for_status()
         st.write("Resposta completa do servidor para rota:", rota)
         st.code(response.content.decode('utf-8'))
@@ -255,11 +278,56 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
     }
 
     try:
-        response = requests.post(url_impressao, data=payload)
+        response = requests.post(url_impressao, data=payload, verify=False)
         response.raise_for_status()
         st.write(f"Recibo da viagem {numero_viagem} foi impresso com sucesso.")
     except requests.exceptions.RequestException as e:
         st.error(f"Erro ao imprimir o recibo para a viagem {numero_viagem}: {e}")
+
+
+def obter_custo_rota(sessao, rota, placa, n_eixos, inicio_vigencia, fim_vigencia):
+    url = 'https://apphom.viafacil.com.br/wsvp/ValePedagio'
+    headers = {
+        'Content-Type': 'text/xml; charset=utf-8',
+        'SOAPAction': 'obterCustoRota'
+    }
+
+    envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
+                             nsmap={
+                                 'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
+                                 'xsd': 'http://www.w3.org/2001/XMLSchema',
+                                 'soapenv': 'http://schemas.xmlsoap.org/soap/envelope/',
+                                 'cgmp': 'http://cgmp.com'
+                             })
+    body = etree.SubElement(envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
+    obter_custo_rota = etree.SubElement(body, '{http://cgmp.com}obterCustoRota',
+                                        attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle': 'http://schemas.xmlsoap.org/soap/encoding/'})
+
+    etree.SubElement(obter_custo_rota, 'sessao', attrib={etree.QName('xsi', 'type'): 'xsd:long'}).text = str(sessao)
+    etree.SubElement(obter_custo_rota, 'nomeRota', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = rota
+    etree.SubElement(obter_custo_rota, 'placa', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = placa
+    etree.SubElement(obter_custo_rota, 'nEixos', attrib={etree.QName('xsi', 'type'): 'xsd:int'}).text = str(n_eixos)
+    etree.SubElement(obter_custo_rota, 'inicioVigencia', attrib={etree.QName('xsi', 'type'): 'xsd:date'}).text = inicio_vigencia
+    etree.SubElement(obter_custo_rota, 'fimVigencia', attrib={etree.QName('xsi', 'type'): 'xsd:date'}).text = fim_vigencia
+
+    soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
+
+    try:
+        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
+        response.raise_for_status()
+        root = etree.fromstring(response.content)
+        root = remove_namespaces(root)  # Certifique-se de que esta função está definida.
+
+        valor = root.find('.//valor')
+        status = root.find('.//status')
+
+        if status is not None and status.text == '0':
+            return {'valor': valor.text if valor is not None else None, 'status': status.text}
+        else:
+            return {'erro': f"Código de status {status.text if status else 'indefinido'}"}
+    except Exception as e:
+        return {'erro': str(e)}
+
 
 
 
@@ -283,7 +351,6 @@ def definir_eixos(grupo):
     else:
         return None, None
         
-
 # Interface Streamlit
 password = st.text_input("Digite a senha para acessar a aplicação:", type="password")
 if password == SENHA_PRINCIPAL:
@@ -317,7 +384,7 @@ if password == SENHA_PRINCIPAL:
                 placas = placa_grupos[grupo]
                 st.write(", ".join(placas) if placas else "Nenhuma placa cadastrada.")
 
-                # Adicionar múltiplas placas usando a função `adicionar_placas_a_grupo`
+                # Adicionar múltiplas placas usando a função adicionar_placas_a_grupo
                 novas_placas = st.text_area(f"Adicionar placas ao grupo {grupo}", key=f"add_{grupo}")
                 if st.button(f"Adicionar ao {grupo}", key=f"add_btn_{grupo}"):
                     if novas_placas.strip():
@@ -343,21 +410,6 @@ if password == SENHA_PRINCIPAL:
                         st.success("Placas removidas com sucesso!")
                     else:
                         st.warning("Digite uma ou mais placas para remover.")
-        elif senha_admin:
-            st.error("Senha incorreta para a área de administração.")
-else:
-    st.warning("Por favor, insira a senha para acessar a aplicação.")
-
-
-            st.subheader("Configurar Valores de Pedágio")
-            for grupo, valores in valores_pedagio.items():
-                st.write(f"Grupo {grupo}")
-                valores["ida"] = st.number_input(f"Valor de ida para {grupo}:", value=valores["ida"], step=0.01, key=f"ida_{grupo}")
-                valores["volta"] = st.number_input(f"Valor de volta para {grupo}:", value=valores["volta"], step=0.01, key=f"volta_{grupo}")
-
-            if st.button("Salvar Valores"):
-                salvar_valores(valores_pedagio)
-                st.success("Valores de pedágio atualizados com sucesso!")
         elif senha_admin:
             st.error("Senha incorreta para a área de administração.")
 else:
