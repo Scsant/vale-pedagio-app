@@ -31,7 +31,7 @@ st.markdown(
         }
     </style>
     <div class="header-container">
-        <img src="https://www.bracell.com/wp-content/uploads/2019/04/bracell_logo_FA.png" alt="Logo">
+        <img src="https://raw.githubusercontent.com/Scsant/vale-pedagio-app/9a8cbe3dddcdadf284f1281fd864bb84097fcb31/Bracell_logo.png" alt="Logo">
         
     </div>
     """,
