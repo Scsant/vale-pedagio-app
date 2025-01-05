@@ -2,3 +2,4 @@ streamlit
 requests
 lxml
 pandas
+python-dotenv
