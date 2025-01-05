@@ -22,8 +22,8 @@ st.markdown(
            
         }
         .header-container img {
-            max-width: 400px; /* Tamanho da imagem */
-            margin-right: 20px; /* Espaçamento ao lado da imagem */
+            max-width: 200px; /* Tamanho da imagem */
+            margin-right: 10px; /* Espaçamento ao lado da imagem */
         }
         .header-container h1 {
             color: white; /* Cor do texto */
