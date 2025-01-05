@@ -1,0 +1,50 @@
+[
+    {
+        "Data/Hora": "2025-01-04 20:05:54",
+        "Tipo": "Placa N\u00e3o Encontrada",
+        "Mensagem": "Placa GHA2A44 n\u00e3o encontrada em nenhum grupo.",
+        "Placa": "GHA2A44",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 21:49:41",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 21:59:07",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 22:13:56",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 22:17:08",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 22:20:53",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
+    }
+]

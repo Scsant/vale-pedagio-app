@@ -1,0 +1,57 @@
+[
+    {
+        "Data/Hora": "2025-01-04 18:50:25",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Custo Ida": 115.33,
+        "Custo Volta": 172.99,
+        "Custo Total": 288.32,
+        "Numero Recibo Ida": "69303810",
+        "Numero Recibo Volta": "69303811",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 20:28:45",
+        "Placa": "CPG1133",
+        "Fazenda": "PLANALTO",
+        "Custo Ida": 47.4,
+        "Custo Volta": 71.1,
+        "Custo Total": 118.5,
+        "Numero Recibo Ida": "69303787",
+        "Numero Recibo Volta": "69303788",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 22:01:53",
+        "Placa": "FWG6J05",
+        "Fazenda": "CANCHIN",
+        "Custo Ida": 115.33,
+        "Custo Volta": 172.99,
+        "Custo Total": 288.32,
+        "Numero Recibo Ida": "74821241",
+        "Numero Recibo Volta": "74821220",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 22:12:12",
+        "Placa": "FWG6J05",
+        "Fazenda": "CANCHIN",
+        "Custo Ida": 115.33,
+        "Custo Volta": 172.99,
+        "Custo Total": 288.32,
+        "Numero Recibo Ida": "74821303",
+        "Numero Recibo Volta": "74821315",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 23:22:16",
+        "Placa": "FWG6J05",
+        "Fazenda": "CANCHIN",
+        "Custo Ida": 115.33,
+        "Custo Volta": 172.99,
+        "Custo Total": 288.32,
+        "Numero Recibo Ida": "74821767",
+        "Numero Recibo Volta": "74821768",
+        "Operador": "sluis"
+    }
+]
