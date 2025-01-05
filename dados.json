@@ -53,5 +53,16 @@
         "Numero Recibo Ida": "74821767",
         "Numero Recibo Volta": "74821768",
         "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:30:02",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO",
+        "Custo Ida": 77.5,
+        "Custo Volta": 139.5,
+        "Custo Total": 217.0,
+        "Numero Recibo Ida": "74827388",
+        "Numero Recibo Volta": "74827389",
+        "Operador": "sluis"
     }
 ]

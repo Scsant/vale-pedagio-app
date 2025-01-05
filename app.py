@@ -10,6 +10,38 @@ from dotenv import load_dotenv
 import os
 
 
+# Adiciona uma imagem no header usando HTML
+st.markdown(
+    """
+    <style>
+        .header-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1f4037, #99f2c8);
+            padding: 30px;
+        }
+        .header-container img {
+            max-width: 150px; /* Tamanho da imagem */
+            margin-right: 20px; /* Espaçamento ao lado da imagem */
+        }
+        .header-container h1 {
+            color: white; /* Cor do texto */
+            font-size: 30px;
+        }
+    </style>
+    <div class="header-container">
+        <img src="https://www.bracell.com/wp-content/uploads/2019/04/bracell_logo_FA.png" alt="Logo">
+        
+    </div>
+    """,
+    unsafe_allow_html=True
+)
+
+# Conteúdo da página
+st.write("Logística Florestal")
+
+
 # Estilo para aplicar o gradiente
 page_style = """
 <style>
@@ -442,20 +474,22 @@ def processar_viagem(placa, fazenda):
     rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
 
     for rota in rotas:
-        # Obter custo da rota de ida (sessão de homologação)
-        custo_ida = obter_custo_rota(sessaoHomologacao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
-        if 'erro' in custo_ida:
-            st.error(f"Erro ao obter custo da rota de ida ({rota['ida']}): {custo_ida['erro']}")
+        try:
+            # Obter custo da rota de ida (sessão de homologação)
+            custo_ida = obter_custo_rota(sessaoHomologacao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
+            if 'erro' in custo_ida:
+                raise Exception(custo_ida['erro'])  # Lança uma exceção para o bloco de tratamento
+            st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
+        except Exception as e:
+            st.error(f"Erro ao obter custo da rota de ida ({rota['ida']}): {e}")
             registrar_erro(
                 tipo="Custo Ida",
-                mensagem=f"Erro ao obter custo da rota ({rota['ida']}): {custo_ida['erro']}",
+                mensagem=f"Erro ao obter custo da rota ({rota['ida']}): {e}",
                 placa=placa,
                 fazenda=fazenda,
                 operador=st.session_state.get("usuario_logado")
             )
-            continue
-        else:
-            st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
+            custo_ida = {'valor': 0.0}  # Define um valor padrão
 
         # Comprar viagem de ida (sessão de produção)
         numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
@@ -470,20 +504,22 @@ def processar_viagem(placa, fazenda):
             )
             continue
 
-        # Obter custo da rota de volta (sessão de homologação)
-        custo_volta = obter_custo_rota(sessaoHomologacao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
-        if 'erro' in custo_volta:
-            st.error(f"Erro ao obter custo da rota de volta ({rota['volta']}): {custo_volta['erro']}")
+        try:
+            # Obter custo da rota de volta (sessão de homologação)
+            custo_volta = obter_custo_rota(sessaoHomologacao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
+            if 'erro' in custo_volta:
+                raise Exception(custo_volta['erro'])  # Lança uma exceção para o bloco de tratamento
+            st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
+        except Exception as e:
+            st.error(f"Erro ao obter custo da rota de volta ({rota['volta']}): {e}")
             registrar_erro(
                 tipo="Custo Volta",
-                mensagem=f"Erro ao obter custo da rota ({rota['volta']}): {custo_volta['erro']}",
+                mensagem=f"Erro ao obter custo da rota ({rota['volta']}): {e}",
                 placa=placa,
                 fazenda=fazenda,
                 operador=st.session_state.get("usuario_logado")
             )
-            continue
-        else:
-            st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
+            custo_volta = {'valor': 0.0}  # Define um valor padrão
 
         # Comprar viagem de volta (sessão de produção)
         numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
@@ -509,6 +545,8 @@ def processar_viagem(placa, fazenda):
             numero_viagem_volta=numero_viagem_volta,
             operador=st.session_state["usuario_logado"]
         )
+        
+        
 
     st.success("Processo concluído!")
 

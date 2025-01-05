@@ -54,5 +54,61 @@
         "Placa": "CPG1133",
         "Fazenda": "CANCHIN",
         "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:13:44",
+        "Tipo": "Placa N\u00e3o Encontrada",
+        "Mensagem": "Placa GHL8I11 n\u00e3o encontrada em nenhum grupo.",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:16:17",
+        "Tipo": "Custo Ida",
+        "Mensagem": "Erro ao obter custo da rota (FAZ S\u00c3O BERNARDINO\t - IDA): C\u00f3digo de status indefinido",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:16:17",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ S\u00c3O BERNARDINO\t - IDA",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:24:12",
+        "Tipo": "Custo Ida",
+        "Mensagem": "Erro ao obter custo da rota (FAZ S\u00c3O BERNARDINO\t - IDA): C\u00f3digo de status indefinido",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:24:13",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ S\u00c3O BERNARDINO\t - IDA",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:28:35",
+        "Tipo": "Custo Ida",
+        "Mensagem": "Erro ao obter custo da rota (FAZ S\u00c3O BERNARDINO\t - IDA): C\u00f3digo de status indefinido",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-05 17:28:36",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ S\u00c3O BERNARDINO\t - IDA",
+        "Placa": "GHL8I11",
+        "Fazenda": "S\u00c3O BERNARDINO\t",
+        "Operador": "sluis"
     }
 ]
