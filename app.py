@@ -19,11 +19,11 @@ st.markdown(
             justify-content: center;
             align-items: center;
             background: linear-gradient(135deg, #1f4037, #99f2c8);
-            padding: 30px;
+           
         }
         .header-container img {
-            max-width: 150px; /* Tamanho da imagem */
-            margin-right: 20px; /* Espaçamento ao lado da imagem */
+            max-width: 200px; /* Tamanho da imagem */
+            margin-right: 100px; /* Espaçamento ao lado da imagem */
         }
         .header-container h1 {
             color: white; /* Cor do texto */
