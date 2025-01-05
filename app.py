@@ -9,6 +9,44 @@ from io import BytesIO
 from dotenv import load_dotenv
 import os
 
+
+# Estilo para aplicar o gradiente
+page_style = """
+<style>
+    /* Gradiente para o fundo */
+    .stApp {
+        background: linear-gradient(135deg, #1f4037, #99f2c8);
+        color: white;
+    }
+
+</style>
+"""
+
+st.markdown(page_style, unsafe_allow_html=True)
+
+# Estilos personalizados para o botão
+button_style = """
+<style>
+    div.stButton > button {
+        background-color: #333333; /* Cor de fundo escura */
+        color: white;             /* Cor do texto */
+        border: 1px solid #444444; /* Borda */
+        padding: 0.5em 1em;       /* Espaçamento interno */
+        border-radius: 5px;       /* Bordas arredondadas */
+        transition: all 0.3s ease; /* Suavização ao passar o mouse */
+    }
+    div.stButton > button:hover {
+        background-color: #555555; /* Cor ao passar o mouse */
+        color: #ffffff;            /* Cor do texto ao passar o mouse */
+        border: 1px solid #666666; /* Cor da borda ao passar o mouse */
+    }
+</style>
+"""
+
+# Aplica os estilos
+st.markdown(button_style, unsafe_allow_html=True)
+
+
 # Carrega as variáveis do .env
 load_dotenv()
 
@@ -124,21 +162,6 @@ def cadastrar_usuario(nome_usuario, senha="Bracell@25"):
     usuarios[nome_usuario] = senha  # Adiciona com a senha fornecida
     salvar_usuarios(usuarios)
     return True
-
-
-# Estilo para aplicar o gradiente
-page_style = """
-<style>
-    /* Gradiente para o fundo */
-    .stApp {
-        background: linear-gradient(135deg, #1f4037, #99f2c8);
-        color: white;
-    }
-
-</style>
-"""
-
-st.markdown(page_style, unsafe_allow_html=True)
 
 # Configurações e constantes
 DADOS_FILE = "dados.json"  # Arquivo para armazenar dados locais

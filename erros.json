@@ -46,5 +46,13 @@
         "Placa": "CPG1133",
         "Fazenda": "CANCHIN",
         "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-04 23:43:39",
+        "Tipo": "Compra Ida",
+        "Mensagem": "Falha na compra da viagem de ida para FAZ CANCHIN - IDA",
+        "Placa": "CPG1133",
+        "Fazenda": "CANCHIN",
+        "Operador": "sluis"
     }
 ]
