@@ -479,7 +479,7 @@ def processar_viagem(placa, fazenda):
             custo_ida = obter_custo_rota(sessaoHomologacao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
             if 'erro' in custo_ida:
                 raise Exception(custo_ida['erro'])  # Lança uma exceção para o bloco de tratamento
-            st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
+            #st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
         except Exception as e:
             st.error(f"Erro ao obter custo da rota de ida ({rota['ida']}): {e}")
             registrar_erro(
@@ -509,7 +509,7 @@ def processar_viagem(placa, fazenda):
             custo_volta = obter_custo_rota(sessaoHomologacao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
             if 'erro' in custo_volta:
                 raise Exception(custo_volta['erro'])  # Lança uma exceção para o bloco de tratamento
-            st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
+            #st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
         except Exception as e:
             st.error(f"Erro ao obter custo da rota de volta ({rota['volta']}): {e}")
             registrar_erro(
