@@ -3,3 +3,5 @@ requests
 lxml
 pandas
 python-dotenv
+xlsxwriter
+
