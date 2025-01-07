@@ -485,8 +485,6 @@ def processar_viagem(placa, fazenda):
             data_emissao=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             placa=placa,
             fazenda=fazenda,
-            custo_ida=None,  # Custo removido
-            custo_volta=None,  # Custo removido
             numero_viagem_ida=numero_viagem_ida,
             numero_viagem_volta=numero_viagem_volta,
             operador=st.session_state["usuario_logado"]
