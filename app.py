@@ -230,15 +230,12 @@ def salvar_dados(dados):
 
 
         
-def adicionar_registro(data_emissao, placa, fazenda, custo_ida, custo_volta, numero_viagem_ida, numero_viagem_volta, operador):
+def adicionar_registro(data_emissao, placa, fazenda, numero_viagem_ida, numero_viagem_volta, operador):
     dados = carregar_dados()
     novo_registro = {
         "Data/Hora": data_emissao,
         "Placa": placa,
         "Fazenda": fazenda,
-        "Custo Ida": custo_ida,
-        "Custo Volta": custo_volta,
-        "Custo Total": custo_ida + custo_volta,
         "Numero Recibo Ida": numero_viagem_ida,
         "Numero Recibo Volta": numero_viagem_volta,
         "Operador": operador  # Adiciona o nome do operador logado
