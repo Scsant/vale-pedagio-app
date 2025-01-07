@@ -404,7 +404,7 @@ def autenticar_usuario(ambiente="producao"):
             sessao_element = autenticar_usuario_return.find('.//sessao')
             if sessao_element is not None:
                 sessao = sessao_element.text
-                st.write(f"Sessão obtida para {ambiente}: {sessao}")
+                #st.write(f"Sessão obtida para {ambiente}: {sessao}")
                 return sessao
         st.error(f"Erro: Elemento 'sessao' não encontrado ou autenticação falhou no ambiente {ambiente}.")
         return None
