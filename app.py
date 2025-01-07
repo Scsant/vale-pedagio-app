@@ -591,50 +591,6 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
         st.error(f"Erro ao imprimir o recibo para a viagem {numero_viagem}: {e}")
 
 
-def obter_custo_rota(sessao_homologacao, rota, placa, n_eixos, inicio_vigencia, fim_vigencia):
-    url = 'https://apphom.viafacil.com.br/wsvp/ValePedagio'
-    headers = {
-        'Content-Type': 'text/xml; charset=utf-8',
-        'SOAPAction': 'obterCustoRota'
-    }
-
-    envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
-                             nsmap={
-                                 'xsi': 'http://www.w3.org/2001/XMLSchema-instance',
-                                 'xsd': 'http://www.w3.org/2001/XMLSchema',
-                                 'soapenv': 'http://schemas.xmlsoap.org/soap/envelope/',
-                                 'cgmp': 'http://cgmp.com'
-                             })
-    body = etree.SubElement(envelope, '{http://schemas.xmlsoap.org/soap/envelope/}Body')
-    obter_custo_rota = etree.SubElement(body, '{http://cgmp.com}obterCustoRota',
-                                        attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle': 'http://schemas.xmlsoap.org/soap/encoding/'})
-
-    etree.SubElement(obter_custo_rota, 'sessao', attrib={etree.QName('xsi', 'type'): 'xsd:long'}).text = str(sessao_homologacao)
-    etree.SubElement(obter_custo_rota, 'nomeRota', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = rota
-    etree.SubElement(obter_custo_rota, 'placa', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = placa
-    etree.SubElement(obter_custo_rota, 'nEixos', attrib={etree.QName('xsi', 'type'): 'xsd:int'}).text = str(n_eixos)
-    etree.SubElement(obter_custo_rota, 'inicioVigencia', attrib={etree.QName('xsi', 'type'): 'xsd:date'}).text = inicio_vigencia
-    etree.SubElement(obter_custo_rota, 'fimVigencia', attrib={etree.QName('xsi', 'type'): 'xsd:date'}).text = fim_vigencia
-
-    soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
-
-    try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
-        response.raise_for_status()
-        root = etree.fromstring(response.content)
-        root = remove_namespaces(root)  # Certifique-se de que esta função está definida.
-
-        valor = root.find('.//valor')
-        status = root.find('.//status')
-
-        if status is not None and status.text == '0':
-            return {'valor': valor.text if valor is not None else None, 'status': status.text}
-        else:
-            return {'erro': f"Código de status {status.text if status else 'indefinido'}"}
-    except Exception as e:
-        return {'erro': str(e)}
-
-
 
 
 # Função para encontrar grupo de uma placa
