@@ -341,35 +341,25 @@ def enviar_para_api(data):
         st.error(f"Erro ao conectar à API: {e}")
 
 
-def autenticar_usuario(ambiente="producao"):
+def autenticar_usuario():
     """
-    Autentica o usuário em um ambiente específico.
+    Autentica o usuário no ambiente de produção.
 
-    Parâmetros:
-        ambiente (str): "producao" ou "homologacao".
     Retorno:
         str: Sessão autenticada ou None em caso de falha.
     """
-    #st.write(f"Autenticando usuário no ambiente {ambiente}...")
+    # st.write(f"Autenticando usuário no ambiente de produção...")
 
-    # Define o URL e as credenciais com base no ambiente
-    if ambiente == "producao":
-        url = PRODUCAO_URL
-        login = PRODUCAO_LOGIN
-        senha = PRODUCAO_SENHA
-    elif ambiente == "homologacao":
-        url = 'https://apphom.viafacil.com.br/wsvp/ValePedagio'
-        login = "ADMINISTRADOR"
-        senha = "grupostp"
-    else:
-        st.error("Ambiente inválido. Use 'producao' ou 'homologacao'.")
-        return None
+    # Define o URL e as credenciais para o ambiente de produção
+    url = PRODUCAO_URL
+    login = PRODUCAO_LOGIN
+    senha = PRODUCAO_SENHA
 
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
         'SOAPAction': 'autenticarUsuario'
     }
-    
+
     # Construção do envelope SOAP
     envelope = etree.Element('{http://schemas.xmlsoap.org/soap/envelope/}Envelope',
                              nsmap={
@@ -382,20 +372,17 @@ def autenticar_usuario(ambiente="producao"):
     autenticar_usuario = etree.SubElement(body, '{http://cgmp.com}autenticarUsuario',
                                           attrib={'{http://schemas.xmlsoap.org/soap/envelope/}encodingStyle': 'http://schemas.xmlsoap.org/soap/encoding/'})
 
-    # Código de acesso é o mesmo para os dois ambientes
     codigodeacesso = etree.SubElement(autenticar_usuario, 'codigodeacesso', attrib={etree.QName('xsi', 'type'): 'xsd:string'})
     codigodeacesso.text = '53943098000187'
     etree.SubElement(autenticar_usuario, 'login', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = login
     etree.SubElement(autenticar_usuario, 'senha', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = senha
 
-    # Cria a requisição SOAP
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
         response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
         response.raise_for_status()
 
-        # Parse da resposta
         response_content = etree.fromstring(response.content)
         response_content = remove_namespaces(response_content)
 
@@ -404,15 +391,14 @@ def autenticar_usuario(ambiente="producao"):
             sessao_element = autenticar_usuario_return.find('.//sessao')
             if sessao_element is not None:
                 sessao = sessao_element.text
-                #st.write(f"Sessão obtida para {ambiente}: {sessao}")
                 return sessao
-        st.error(f"Erro: Elemento 'sessao' não encontrado ou autenticação falhou no ambiente {ambiente}.")
+
+        st.error("Erro: Elemento 'sessao' não encontrado ou autenticação falhou.")
         return None
 
     except requests.exceptions.RequestException as e:
-        st.error(f"Erro na requisição SOAP no ambiente {ambiente}: {e}")
+        st.error(f"Erro na requisição SOAP: {e}")
         return None
-
 
 
 
@@ -420,17 +406,14 @@ def autenticar_usuario(ambiente="producao"):
 
 def processar_viagem(placa, fazenda):
     global placa_grupos
-    placa_grupos = carregar_placas()  # Recarregar os dados de grupos de placas
+    placa_grupos = carregar_placas()
 
-    # Obtenha sessões para produção e homologação
-    sessao = autenticar_usuario(ambiente="producao")  # Sessão para produção
-    sessaoHomologacao = autenticar_usuario(ambiente="homologacao")  # Sessão para homologação
-    
-    if not sessao or not sessaoHomologacao:
+    sessao = autenticar_usuario()
+    if not sessao:
         st.error("Erro ao autenticar o usuário.")
         registrar_erro(
             tipo="Autenticação",
-            mensagem="Falha ao autenticar o usuário em produção ou homologação.",
+            mensagem="Falha ao autenticar o usuário em produção.",
             operador=st.session_state.get("usuario_logado")
         )
         return
@@ -458,7 +441,7 @@ def processar_viagem(placa, fazenda):
             operador=st.session_state.get("usuario_logado")
         )
         return
-    
+
     if not fazenda:
         st.error("Fazenda não especificada.")
         registrar_erro(
@@ -474,24 +457,7 @@ def processar_viagem(placa, fazenda):
     rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
 
     for rota in rotas:
-        try:
-            # Obter custo da rota de ida (sessão de homologação)
-            custo_ida = obter_custo_rota(sessaoHomologacao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
-            if 'erro' in custo_ida:
-                raise Exception(custo_ida['erro'])  # Lança uma exceção para o bloco de tratamento
-            #st.write(f"Custo da rota de ida ({rota['ida']}): R$ {custo_ida['valor']}")
-        except Exception as e:
-            st.error(f"Erro ao obter custo da rota de ida ({rota['ida']}): {e}")
-            registrar_erro(
-                tipo="Custo Ida",
-                mensagem=f"Erro ao obter custo da rota ({rota['ida']}): {e}",
-                placa=placa,
-                fazenda=fazenda,
-                operador=st.session_state.get("usuario_logado")
-            )
-            custo_ida = {'valor': 0.0}  # Define um valor padrão
-
-        # Comprar viagem de ida (sessão de produção)
+        # Comprar viagem de ida
         numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
         if not numero_viagem_ida:
             st.error(f"Falha na compra da viagem de ida para {rota['ida']}")
@@ -504,24 +470,7 @@ def processar_viagem(placa, fazenda):
             )
             continue
 
-        try:
-            # Obter custo da rota de volta (sessão de homologação)
-            custo_volta = obter_custo_rota(sessaoHomologacao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
-            if 'erro' in custo_volta:
-                raise Exception(custo_volta['erro'])  # Lança uma exceção para o bloco de tratamento
-            #st.write(f"Custo da rota de volta ({rota['volta']}): R$ {custo_volta['valor']}")
-        except Exception as e:
-            st.error(f"Erro ao obter custo da rota de volta ({rota['volta']}): {e}")
-            registrar_erro(
-                tipo="Custo Volta",
-                mensagem=f"Erro ao obter custo da rota ({rota['volta']}): {e}",
-                placa=placa,
-                fazenda=fazenda,
-                operador=st.session_state.get("usuario_logado")
-            )
-            custo_volta = {'valor': 0.0}  # Define um valor padrão
-
-        # Comprar viagem de volta (sessão de produção)
+        # Comprar viagem de volta
         numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
         if not numero_viagem_volta:
             st.error(f"Falha na compra da viagem de volta para {rota['volta']}")
@@ -539,14 +488,12 @@ def processar_viagem(placa, fazenda):
             data_emissao=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             placa=placa,
             fazenda=fazenda,
-            custo_ida=float(custo_ida['valor']),
-            custo_volta=float(custo_volta['valor']),
+            custo_ida=None,  # Custo removido
+            custo_volta=None,  # Custo removido
             numero_viagem_ida=numero_viagem_ida,
             numero_viagem_volta=numero_viagem_volta,
             operador=st.session_state["usuario_logado"]
         )
-        
-        
 
     st.success("Processo concluído!")
 
