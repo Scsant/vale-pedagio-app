@@ -550,15 +550,13 @@ def processar_viagem(placa, fazenda):
 
     st.success("Processo concluído!")
 
-
-
-def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
+def comprar_viagem(sessao, fazenda, placa, nEixos, inicioVigencia, fimVigencia):
     """
-    Função para comprar viagem via SOAP.
+    Função para comprar viagem via SOAP baseada na fazenda.
 
     Parâmetros:
         sessao (str): Sessão autenticada (produção ou homologação).
-        rota (str): Nome da rota.
+        fazenda (str): Nome da fazenda.
         placa (str): Placa do caminhão.
         nEixos (int): Número de eixos.
         inicioVigencia (str): Data de início da vigência (YYYY-MM-DD).
@@ -567,7 +565,10 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
     Retorno:
         str: Número da viagem ou None em caso de falha.
     """
-    url = PRODUCAO_URL
+    if not PRODUCAO_URL:
+        st.error("URL de produção não está configurada.")
+        return None
+
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
         'SOAPAction': 'comprarViagem'
@@ -587,7 +588,7 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
 
     # Adiciona os parâmetros ao SOAP envelope
     etree.SubElement(comprar_viagem, 'sessao', attrib={etree.QName('xsi', 'type'): 'xsd:long'}).text = sessao
-    etree.SubElement(comprar_viagem, 'rota', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = rota
+    etree.SubElement(comprar_viagem, 'fazenda', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = fazenda
     etree.SubElement(comprar_viagem, 'placa', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = placa
     etree.SubElement(comprar_viagem, 'nEixos', attrib={etree.QName('xsi', 'type'): 'xsd:int'}).text = str(nEixos)
     etree.SubElement(comprar_viagem, 'inicioVigencia', attrib={etree.QName('xsi', 'type'): 'xsd:date'}).text = inicioVigencia
@@ -596,11 +597,15 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
     # Converte o envelope para string
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
+    # Log da requisição SOAP
+    st.write(f"SOAP Request Enviado: {soap_request.decode('utf-8')}")
+
     try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
+        response = requests.post(PRODUCAO_URL, data=soap_request, headers=headers, timeout=30, verify=False)
         response.raise_for_status()
 
-        #st.code(response.content.decode('utf-8'))  # Exibe o conteúdo completo da resposta SOAP
+        # Log da resposta SOAP
+        st.write(f"SOAP Response Recebida: {response.content.decode('utf-8')}")
 
         # Parse da resposta SOAP
         root = etree.fromstring(response.content)
@@ -609,21 +614,28 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
         numero = root.find('.//numero')
         status = root.find('.//status')
 
-        if status is not None and status.text == '0':
-            st.success(f"Compra realizada com sucesso para rota {rota}. Número da viagem: {numero.text}")
+        if status is None:
+            st.error("Resposta SOAP inválida: 'status' não encontrado.")
+            return None
+
+        if status.text == '0':  # Sucesso
+            st.success(f"Compra realizada com sucesso para fazenda {fazenda}. Número da viagem: {numero.text}")
             return numero.text
         else:
             # Consultar e exibir detalhes do erro
             consultar_erro(status.text)
-            st.error(f"Falha na compra da viagem para {rota}.")
+            st.error(f"Falha na compra da viagem para fazenda {fazenda}. Código de status: {status.text}")
             return None
 
     except requests.exceptions.RequestException as e:
-        st.error(f"Erro de conexão ao servidor para rota {rota}: {e}")
+        st.error(f"Erro de conexão ao servidor para fazenda {fazenda}: {e}")
         return None
     except Exception as e:
-        st.error(f"Erro inesperado ao processar resposta para rota {rota}: {e}")
+        st.error(f"Erro inesperado ao processar resposta para fazenda {fazenda}: {e}")
         return None
+
+
+
     
 
 # Função para imprimir recibo
