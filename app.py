@@ -350,7 +350,7 @@ def autenticar_usuario(ambiente="producao"):
     Retorno:
         str: Sessão autenticada ou None em caso de falha.
     """
-    st.write(f"Autenticando usuário no ambiente {ambiente}...")
+    #st.write(f"Autenticando usuário no ambiente {ambiente}...")
 
     # Define o URL e as credenciais com base no ambiente
     if ambiente == "producao":
