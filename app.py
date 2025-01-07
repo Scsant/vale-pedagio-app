@@ -380,7 +380,7 @@ def autenticar_usuario():
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
+        response = requests.post(url, data=soap_request, headers=headers, timeout=30, verify=False)
         response.raise_for_status()
 
         response_content = etree.fromstring(response.content)
@@ -543,7 +543,7 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
-        response = requests.post(url, data=soap_request, headers=headers, timeout=10, verify=False)
+        response = requests.post(url, data=soap_request, headers=headers, timeout=30, verify=False)
         response.raise_for_status()
 
         #st.code(response.content.decode('utf-8'))  # Exibe o conteúdo completo da resposta SOAP
