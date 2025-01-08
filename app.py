@@ -569,8 +569,18 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
 
     
 
-# Função para imprimir recibo
 def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
+    """
+    Função para imprimir o recibo da viagem.
+    
+    Parâmetros:
+        sessao (str): Sessão autenticada.
+        numero_viagem (str): Número da viagem.
+        imprimir_observacoes (bool): Indica se observações devem ser incluídas no recibo.
+
+    Retorno:
+        dict: Resultado da impressão contendo 'status' e 'mensagem'.
+    """
     url_impressao = 'https://app.viafacil.com.br/vpnew/imprimirValePedagioSTP.do'
     payload = {
         'sessao': sessao,
@@ -581,9 +591,29 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
     try:
         response = requests.post(url_impressao, data=payload, verify=False)
         response.raise_for_status()
-        st.write(f"Recibo da viagem {numero_viagem} foi impresso com sucesso.")
+
+        # Exibe o conteúdo completo da resposta para diagnóstico
+        st.write("Resposta completa do servidor:")
+        st.code(response.text)
+
+        if "sucesso" in response.text.lower():
+            mensagem = f"Recibo da viagem {numero_viagem} foi impresso com sucesso."
+            st.success(mensagem)
+            return {"status": "sucesso", "mensagem": mensagem}
+        else:
+            mensagem = f"Falha ao imprimir recibo da viagem {numero_viagem}. Resposta do servidor: {response.text}"
+            st.error(mensagem)
+            return {"status": "falha", "mensagem": mensagem}
+
     except requests.exceptions.RequestException as e:
-        st.error(f"Erro ao imprimir o recibo para a viagem {numero_viagem}: {e}")
+        mensagem = f"Erro ao conectar ao servidor para imprimir o recibo da viagem {numero_viagem}: {e}"
+        st.error(mensagem)
+        return {"status": "erro", "mensagem": mensagem}
+
+    except Exception as e:
+        mensagem = f"Erro inesperado ao imprimir o recibo da viagem {numero_viagem}: {e}"
+        st.error(mensagem)
+        return {"status": "erro", "mensagem": mensagem}
 
 
 
