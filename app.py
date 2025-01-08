@@ -466,6 +466,9 @@ def processar_viagem(placa, fazenda):
                 operador=st.session_state.get("usuario_logado")
             )
             continue
+        else:
+            # Imprimir recibo da viagem de ida
+            imprimir_recibo(sessao, numero_viagem_ida, imprimir_observacoes=True)
 
         # Comprar viagem de volta
         numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
@@ -479,6 +482,9 @@ def processar_viagem(placa, fazenda):
                 operador=st.session_state.get("usuario_logado")
             )
             continue
+        else:
+            # Imprimir recibo da viagem de volta
+            imprimir_recibo(sessao, numero_viagem_volta, imprimir_observacoes=True)
 
         # Adicionar os dados ao arquivo JSON
         adicionar_registro(
@@ -491,6 +497,7 @@ def processar_viagem(placa, fazenda):
         )
 
     st.success("Processo concluído!")
+
 
 
 def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
