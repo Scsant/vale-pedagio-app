@@ -600,8 +600,8 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
         response.raise_for_status()
 
         # Exibe o conteúdo completo da resposta para diagnóstico
-        st.write("Resposta completa do servidor:")
-        st.code(response.text)
+        #st.write("Resposta completa do servidor:")
+        #st.code(response.text)
 
         if "sucesso" in response.text.lower():
             mensagem = f"Recibo da viagem {numero_viagem} foi impresso com sucesso."
