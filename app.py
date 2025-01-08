@@ -614,12 +614,12 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
 
     except requests.exceptions.RequestException as e:
         mensagem = f"Erro ao conectar ao servidor para imprimir o recibo da viagem {numero_viagem}: {e}"
-        st.error(mensagem)
+        #st.error(mensagem)
         return {"status": "erro", "mensagem": mensagem}
 
     except Exception as e:
         mensagem = f"Erro inesperado ao imprimir o recibo da viagem {numero_viagem}: {e}"
-        st.error(mensagem)
+        #st.error(mensagem)
         return {"status": "erro", "mensagem": mensagem}
 
 
