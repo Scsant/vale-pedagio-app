@@ -579,7 +579,7 @@ def comprar_viagem(sessao, rota, placa, nEixos, inicioVigencia, fimVigencia):
 def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
     """
     Função para imprimir o recibo da viagem.
-    
+
     Parâmetros:
         sessao (str): Sessão autenticada.
         numero_viagem (str): Número da viagem.
@@ -599,28 +599,22 @@ def imprimir_recibo(sessao, numero_viagem, imprimir_observacoes):
         response = requests.post(url_impressao, data=payload, verify=False)
         response.raise_for_status()
 
-        # Exibe o conteúdo completo da resposta para diagnóstico
-        #st.write("Resposta completa do servidor:")
-        #st.code(response.text)
-
+        # Processa a resposta do servidor
         if "sucesso" in response.text.lower():
             mensagem = f"Recibo da viagem {numero_viagem} foi impresso com sucesso."
-            st.success(mensagem)
             return {"status": "sucesso", "mensagem": mensagem}
         else:
             mensagem = f"Falha ao imprimir recibo da viagem {numero_viagem}. Resposta do servidor: {response.text}"
-            st.error(mensagem)
             return {"status": "falha", "mensagem": mensagem}
 
     except requests.exceptions.RequestException as e:
         mensagem = f"Erro ao conectar ao servidor para imprimir o recibo da viagem {numero_viagem}: {e}"
-        #st.error(mensagem)
         return {"status": "erro", "mensagem": mensagem}
 
     except Exception as e:
         mensagem = f"Erro inesperado ao imprimir o recibo da viagem {numero_viagem}: {e}"
-        #st.error(mensagem)
         return {"status": "erro", "mensagem": mensagem}
+
 
 
 
