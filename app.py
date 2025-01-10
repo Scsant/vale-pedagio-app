@@ -88,6 +88,21 @@ PRODUCAO_URL = os.getenv("PRODUCAO_URL")
 PRODUCAO_LOGIN = os.getenv("PRODUCAO_LOGIN")
 PRODUCAO_SENHA = os.getenv("PRODUCAO_SENHA")
 
+url = PRODUCAO_URL
+login = PRODUCAO_LOGIN
+senha1 = PRODUCAO_SENHA
+
+USUARIOS_FILE = "usuarios.json"  # Arquivo para armazenar os usuários
+ERROS_FILE = "erros.json"  # Arquivo para registrar erros
+DADOS_FILE = "dados.json"  # Arquivo para armazenar dados locais
+FILE_PATH = "placas_grupos.json"
+FAZENDAS_FILE = "fazendas.json"
+
+ADMIN_PASSWORD = "supervisor123"  # Senha para acessar a área de administração
+SENHA_PRINCIPAL = "Bracell@258"  # Senha para acessar a aplicação
+ADMIN_CONTROL_PASSWORD = "controle123" 
+
+
 # Dicionário de erros
 ERROS = {
     "0": {"descricao": "Sucesso", "obs": ""},
@@ -129,8 +144,6 @@ def consultar_erro(codigo):
         st.error("Código de erro não encontrado.")
 
 
-ERROS_FILE = "erros.json"  # Arquivo para registrar erros
-
 # Garante que o arquivo `erros.json` exista na inicialização
 if not os.path.exists(ERROS_FILE):
     with open(ERROS_FILE, "w") as file:
@@ -164,9 +177,6 @@ def registrar_erro(tipo, mensagem, placa=None, fazenda=None, operador=None):
     salvar_erros(erros)
 
 
-
-USUARIOS_FILE = "usuarios.json"  # Arquivo para armazenar os usuários
-
 # Criar o arquivo `usuarios.json` com o usuário inicial
 if not os.path.exists(USUARIOS_FILE):
     with open(USUARIOS_FILE, "w") as file:
@@ -194,14 +204,6 @@ def cadastrar_usuario(nome_usuario, senha="Bracell@25"):
     usuarios[nome_usuario] = senha  # Adiciona com a senha fornecida
     salvar_usuarios(usuarios)
     return True
-
-# Configurações e constantes
-DADOS_FILE = "dados.json"  # Arquivo para armazenar dados locais
-FILE_PATH = "placas_grupos.json"
-ADMIN_PASSWORD = "supervisor123"  # Senha para acessar a área de administração
-SENHA_PRINCIPAL = "Bracell@258"  # Senha para acessar a aplicação
-ADMIN_CONTROL_PASSWORD = "controle123" 
-
 
 # Garante que o arquivo `dados.json` exista na inicialização
 if not os.path.exists(DADOS_FILE):
@@ -312,6 +314,31 @@ def adicionar_placas_a_grupo(grupo, placas_para_adicionar):
     # Salva o JSON atualizado para garantir persistência
     salvar_placas(placa_grupos)
     return novas_placas_adicionadas
+# Verifica se o arquivo existe; se não, cria um exemplo básico
+if not os.path.exists(FAZENDAS_FILE):
+    fazendas_exemplo = [f"Fazenda {i+1}" for i in range(500)]  # 500 fazendas fictícias
+    with open(FAZENDAS_FILE, "w", encoding="utf-8") as file:
+        json.dump(fazendas_exemplo, file, indent=4)
+
+# Função para carregar fazendas do arquivo JSON
+def carregar_fazendas():
+    with open(FAZENDAS_FILE, "r", encoding="utf-8") as file:
+        return json.load(file)
+
+# Carrega as fazendas do arquivo
+fazendas = carregar_fazendas()
+
+# Exibe apenas as 30 primeiras fazendas para o checkbox
+fazendas_para_checkbox = fazendas[:30]
+
+# Sidebar para seleção de fazendas
+st.sidebar.title("Seleção de Fazendas")
+fazendas_selecionadas = st.sidebar.multiselect(
+    "Escolha as fazendas para adicionar à lista suspensa:",
+    fazendas_para_checkbox
+)
+
+
 # Função para remover namespaces do XML
 def remove_namespaces(tree):
     for elem in tree.iter():
@@ -348,9 +375,7 @@ def autenticar_usuario():
     # st.write(f"Autenticando usuário no ambiente de produção...")
 
     # Define o URL e as credenciais para o ambiente de produção
-    url = PRODUCAO_URL
-    login = PRODUCAO_LOGIN
-    senha = PRODUCAO_SENHA
+
 
     headers = {
         'Content-Type': 'text/xml; charset=utf-8',
@@ -372,14 +397,14 @@ def autenticar_usuario():
     codigodeacesso = etree.SubElement(autenticar_usuario, 'codigodeacesso', attrib={etree.QName('xsi', 'type'): 'xsd:string'})
     codigodeacesso.text = '53943098000187'
     etree.SubElement(autenticar_usuario, 'login', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = login
-    etree.SubElement(autenticar_usuario, 'senha', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = senha
+    etree.SubElement(autenticar_usuario, 'senha', attrib={etree.QName('xsi', 'type'): 'xsd:string'}).text = senha1
 
     soap_request = etree.tostring(envelope, pretty_print=True, xml_declaration=True, encoding='UTF-8')
 
     try:
         response = requests.post(url, data=soap_request, headers=headers, timeout=30, verify=False)
         response.raise_for_status()
-
+        
         response_content = etree.fromstring(response.content)
         response_content = remove_namespaces(response_content)
 
@@ -396,6 +421,7 @@ def autenticar_usuario():
     except requests.exceptions.RequestException as e:
         st.error(f"Erro na requisição SOAP: {e}")
         return None
+        
 
 
 
@@ -405,6 +431,16 @@ def processar_viagem(placa, fazenda):
     global placa_grupos
     placa_grupos = carregar_placas()
 
+    # Validação da fazenda
+    if not fazenda or fazenda.strip() == "":
+        st.error("Fazenda inválida ou não especificada. Por favor, selecione uma fazenda válida.")
+        return
+    fazenda = fazenda.strip().upper()  # Sanitização
+
+    # Log da fazenda
+    st.write(f"Fazenda Selecionada: {fazenda}")
+
+    # Autenticação do usuário
     sessao = autenticar_usuario()
     if not sessao:
         st.error("Erro ao autenticar o usuário.")
@@ -415,6 +451,7 @@ def processar_viagem(placa, fazenda):
         )
         return
 
+    # Encontrar grupo da placa
     grupo = encontrar_grupo(placa)
     if not grupo:
         st.error(f"A placa {placa} não está cadastrada em nenhum grupo.")
@@ -427,9 +464,10 @@ def processar_viagem(placa, fazenda):
         )
         return
 
+    # Definir eixos do grupo
     nEixosIda, nEixosVolta = definir_eixos(grupo)
     if nEixosIda is None or nEixosVolta is None:
-        st.error("Erro ao definir os eixos para o grupo.")
+        st.error(f"Erro ao definir os eixos para o grupo {grupo}.")
         registrar_erro(
             tipo="Definição de Eixos",
             mensagem=f"Não foi possível definir eixos para o grupo {grupo}.",
@@ -439,25 +477,23 @@ def processar_viagem(placa, fazenda):
         )
         return
 
-    if not fazenda:
-        st.error("Fazenda não especificada.")
-        registrar_erro(
-            tipo="Fazenda Não Especificada",
-            mensagem="Fazenda não foi fornecida pelo operador.",
-            placa=placa,
-            operador=st.session_state.get("usuario_logado")
-        )
-        return
+    # Log dos eixos
+    st.write(f"Placa: {placa}, Grupo: {grupo}, Eixos Ida: {nEixosIda}, Eixos Volta: {nEixosVolta}")
 
+    # Definir vigência
     inicioVigencia = datetime.today().strftime('%Y-%m-%d')
     fimVigencia = (datetime.today() + timedelta(days=5)).strftime('%Y-%m-%d')
-    rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
 
+    # Criar rotas
+    rotas = [{'ida': f'FAZ {fazenda} - IDA', 'volta': f'FAZ {fazenda} - VOLTA'}]
+    st.write(f"Rotas Geradas: {rotas}")
+
+    # Processar cada rota
     for rota in rotas:
         # Comprar viagem de ida
         numero_viagem_ida = comprar_viagem(sessao, rota['ida'], placa, nEixosIda, inicioVigencia, fimVigencia)
         if not numero_viagem_ida:
-            st.error(f"Falha na compra da viagem de ida para {rota['ida']}")
+            st.error(f"Erro crítico: Falha na compra da viagem de ida para {rota['ida']}.")
             registrar_erro(
                 tipo="Compra Ida",
                 mensagem=f"Falha na compra da viagem de ida para {rota['ida']}",
@@ -465,15 +501,15 @@ def processar_viagem(placa, fazenda):
                 fazenda=fazenda,
                 operador=st.session_state.get("usuario_logado")
             )
-            continue
-        else:
-            # Imprimir recibo da viagem de ida
-            imprimir_recibo(sessao, numero_viagem_ida, imprimir_observacoes=True)
+            return  # Interrompe o processo em caso de erro crítico
+
+        # Imprimir recibo da viagem de ida
+        imprimir_recibo(sessao, numero_viagem_ida, imprimir_observacoes=True)
 
         # Comprar viagem de volta
         numero_viagem_volta = comprar_viagem(sessao, rota['volta'], placa, nEixosVolta, inicioVigencia, fimVigencia)
         if not numero_viagem_volta:
-            st.error(f"Falha na compra da viagem de volta para {rota['volta']}")
+            st.error(f"Erro crítico: Falha na compra da viagem de volta para {rota['volta']}.")
             registrar_erro(
                 tipo="Compra Volta",
                 mensagem=f"Falha na compra da viagem de volta para {rota['volta']}",
@@ -481,12 +517,12 @@ def processar_viagem(placa, fazenda):
                 fazenda=fazenda,
                 operador=st.session_state.get("usuario_logado")
             )
-            continue
-        else:
-            # Imprimir recibo da viagem de volta
-            imprimir_recibo(sessao, numero_viagem_volta, imprimir_observacoes=True)
+            return  # Interrompe o processo em caso de erro crítico
 
-        # Adicionar os dados ao arquivo JSON
+        # Imprimir recibo da viagem de volta
+        imprimir_recibo(sessao, numero_viagem_volta, imprimir_observacoes=True)
+
+        # Registrar os dados no JSON
         adicionar_registro(
             data_emissao=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             placa=placa,
@@ -496,7 +532,8 @@ def processar_viagem(placa, fazenda):
             operador=st.session_state["usuario_logado"]
         )
 
-    st.success("Processo concluído!")
+    st.success("Processo concluído com sucesso!")
+
 
 
 
@@ -639,6 +676,7 @@ def definir_eixos(grupo):
     else:
         return None, None
         
+
 # Interface Streamlit
 st.title("Login")
 
@@ -661,13 +699,42 @@ if "usuario_logado" in st.session_state:
 
     # Processamento de viagem
     placa = st.text_input("Placa para processar viagem:")
-    fazenda = st.text_input("Fazenda:")
+    
+    # Substituir o campo de entrada da fazenda por uma lista suspensa
+    fazenda = st.selectbox("Fazenda:", fazendas_selecionadas)
 
     if st.button("Processar Viagem"):
         if placa and fazenda:
             processar_viagem(placa, fazenda)
         else:
             st.warning("Por favor, preencha todos os campos!")
+
+# Área administrativa para gerenciar o arquivo JSON de fazendas
+with st.expander("Gerenciar Fazendas (Apenas para Administradores)"):
+    senha_admin = st.text_input("Senha do Administrador:", type="password", key="admin_senha")
+
+    if senha_admin == "admin123":  # Senha fictícia para administração
+        st.success("Acesso concedido à administração.")
+
+        novas_fazendas = st.text_area(
+            "Adicione novas fazendas (uma por linha):",
+            placeholder="Exemplo:\nFazenda Nova 1\nFazenda Nova 2"
+        )
+
+        if st.button("Adicionar Fazendas"):
+            if novas_fazendas.strip():
+                novas_fazendas_lista = [faz.strip() for faz in novas_fazendas.split("\n") if faz.strip()]
+                fazendas.extend(novas_fazendas_lista)
+                with open(FAZENDAS_FILE, "w") as file:
+                    json.dump(fazendas, file, indent=4)
+                st.success(f"{len(novas_fazendas_lista)} fazenda(s) adicionada(s) com sucesso!")
+            else:
+                st.warning("Nenhuma fazenda foi adicionada. Verifique os dados inseridos.")
+    elif senha_admin:
+        st.error("Senha incorreta!")
+
+
+
 
 # Área de Administração - Gerenciamento de Grupos de Placas
 with st.expander("Área de Administração - Somente Autorizados"):

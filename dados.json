@@ -1,1 +1,18 @@
-[]
+[
+    {
+        "Data/Hora": "2025-01-10 01:22:23",
+        "Placa": "GHO0H65",
+        "Fazenda": "PLANALTO",
+        "Numero Recibo Ida": "75040223",
+        "Numero Recibo Volta": "75040238",
+        "Operador": "sluis"
+    },
+    {
+        "Data/Hora": "2025-01-10 01:24:03",
+        "Placa": "GHO0H65",
+        "Fazenda": "PLANALTO",
+        "Numero Recibo Ida": "75040258",
+        "Numero Recibo Volta": "75040259",
+        "Operador": "sluis"
+    }
+]
