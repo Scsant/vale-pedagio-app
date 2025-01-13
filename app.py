@@ -8,6 +8,7 @@ import pandas as pd
 from io import BytesIO
 from dotenv import load_dotenv
 import os
+import base64
 
 
 # Adiciona uma imagem no header usando HTML
@@ -18,12 +19,14 @@ st.markdown(
             display: flex;
             justify-content: center;
             align-items: center;
+            border-radius: 100px;
             background: linear-gradient(135deg, #1f4037, #99f2c8);
            
         }
         .header-container img {
             max-width: 200px; /* Tamanho da imagem */
             margin-right: 10px; /* Espaçamento ao lado da imagem */
+           
         }
         .header-container h1 {
             color: white; /* Cor do texto */
@@ -38,8 +41,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# Conteúdo da página
-st.write("Logística Florestal")
 
 
 # Estilo para aplicar o gradiente
@@ -82,6 +83,18 @@ st.markdown(button_style, unsafe_allow_html=True)
 # Carrega as variáveis do .env
 load_dotenv()
 
+# Tokens e repositório do GitHub
+TOKEN_FAZENDAS_SELECIONADAS = os.getenv("FAZENDAS_SELECIONADAS")
+TOKEN_FAZENDAS = os.getenv("FAZENDAS")
+REPO_OWNER = "Scsant"  # Dono do repositório
+REPO_NAME = "vale-pedagio-app"  # Nome do repositório
+BRANCH = "master"
+
+# Caminhos dos arquivos no repositório
+FAZENDAS_FILE_PATH = "fazendas.json"
+FAZENDAS_SELECIONADAS_FILE_PATH = "fazendas_selecionadas.json"
+BASE_API_URL = f"https://api.github.com/repos/{REPO_OWNER}/{REPO_NAME}/contents"
+
 
 # Acessa as variáveis de ambiente
 PRODUCAO_URL = os.getenv("PRODUCAO_URL")
@@ -97,6 +110,7 @@ ERROS_FILE = "erros.json"  # Arquivo para registrar erros
 DADOS_FILE = "dados.json"  # Arquivo para armazenar dados locais
 FILE_PATH = "placas_grupos.json"
 FAZENDAS_FILE = "fazendas.json"
+FAZENDAS_SELECIONADAS_FILE = "fazendas_selecionadas.json"
 
 ADMIN_PASSWORD = "supervisor123"  # Senha para acessar a área de administração
 SENHA_PRINCIPAL = "Bracell@258"  # Senha para acessar a aplicação
@@ -314,29 +328,84 @@ def adicionar_placas_a_grupo(grupo, placas_para_adicionar):
     # Salva o JSON atualizado para garantir persistência
     salvar_placas(placa_grupos)
     return novas_placas_adicionadas
-# Verifica se o arquivo existe; se não, cria um exemplo básico
-if not os.path.exists(FAZENDAS_FILE):
-    fazendas_exemplo = [f"Fazenda {i+1}" for i in range(500)]  # 500 fazendas fictícias
-    with open(FAZENDAS_FILE, "w", encoding="utf-8") as file:
-        json.dump(fazendas_exemplo, file, indent=4)
 
-# Função para carregar fazendas do arquivo JSON
-def carregar_fazendas():
-    with open(FAZENDAS_FILE, "r", encoding="utf-8") as file:
-        return json.load(file)
+# Headers para autenticação
+HEADERS_FAZENDAS = {
+    "Authorization": f"token {TOKEN_FAZENDAS}",
+    "Accept": "application/vnd.github.v3+json"
+}
 
-# Carrega as fazendas do arquivo
-fazendas = carregar_fazendas()
+HEADERS_FAZENDAS_SELECIONADAS = {
+    "Authorization": f"token {TOKEN_FAZENDAS_SELECIONADAS}",
+    "Accept": "application/vnd.github.v3+json"
+}
 
-# Exibe apenas as 30 primeiras fazendas para o checkbox
-fazendas_para_checkbox = fazendas[:30]
+# Função para carregar um arquivo do GitHub
+def carregar_arquivo_github(file_path, headers):
+    response = requests.get(f"{BASE_API_URL}/{file_path}", headers=headers)
+    if response.status_code == 200:
+        content = response.json()
+        decoded_content = base64.b64decode(content['content']).decode("utf-8")
+        return json.loads(decoded_content)
+    elif response.status_code == 404:
+        return None  # Arquivo não encontrado
+    else:
+        raise Exception(f"Erro ao carregar o arquivo: {response.status_code}, {response.json()}")
 
-# Sidebar para seleção de fazendas
-st.sidebar.title("Seleção de Fazendas")
-fazendas_selecionadas = st.sidebar.multiselect(
-    "Escolha as fazendas para adicionar à lista suspensa:",
-    fazendas_para_checkbox
-)
+# Função para salvar um arquivo no GitHub
+def salvar_arquivo_github(file_path, content, headers, message="Atualizando arquivo"):
+    # Obter o SHA do arquivo atual, se existir
+    response = requests.get(f"{BASE_API_URL}/{file_path}", headers=headers)
+    sha = response.json().get("sha") if response.status_code == 200 else None
+
+    # Criar o payload para a API do GitHub
+    payload = {
+        "message": message,
+        "content": base64.b64encode(json.dumps(content).encode("utf-8")).decode("utf-8"),
+        "branch": BRANCH,
+        "sha": sha
+    }
+
+    # Salvar ou criar o arquivo no GitHub
+    response = requests.put(f"{BASE_API_URL}/{file_path}", headers=headers, json=payload)
+    if response.status_code in [200, 201]:
+        return response.json()
+    else:
+        raise Exception(f"Erro ao salvar o arquivo: {response.status_code}, {response.json()}")
+
+# Exemplo de uso
+try:
+    # Carregar as fazendas
+    fazendas = carregar_arquivo_github(FAZENDAS_FILE_PATH, HEADERS_FAZENDAS) or [f"Fazenda {i+1}" for i in range(500)]
+
+    # Atualizar o arquivo de fazendas selecionadas
+    fazendas_selecionadas = carregar_arquivo_github(FAZENDAS_SELECIONADAS_FILE_PATH, HEADERS_FAZENDAS_SELECIONADAS) or []
+
+    # Sidebar para seleção de fazendas com persistência
+    st.sidebar.title("Seleção de Fazendas")
+    novas_selecoes = st.sidebar.multiselect(
+        "Escolha as fazendas para adicionar à lista suspensa:",
+        fazendas[:30],
+        default=fazendas_selecionadas  # Pré-seleciona as fazendas salvas
+    )
+
+    # Verifica se houve alterações nas seleções
+    if set(novas_selecoes) != set(fazendas_selecionadas):
+        # Atualiza a lista de seleções
+        fazendas_selecionadas = novas_selecoes
+
+        # Salva as novas seleções no GitHub
+        salvar_arquivo_github(
+            FAZENDAS_SELECIONADAS_FILE_PATH,
+            fazendas_selecionadas,
+            HEADERS_FAZENDAS_SELECIONADAS,
+            message="Atualizando seleções de fazendas"
+        )
+
+except Exception as e:
+    st.error(f"Erro: {e}")
+
+
 
 
 # Função para remover namespaces do XML
