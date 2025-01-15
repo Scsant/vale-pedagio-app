@@ -2,8 +2,7 @@
     "Bitrem_4": [
         "GHO0H65",
         "GHM3H15",
-        "GHA2A44",
-        "GGQ0E23",
+        "GHA2A44",        
         "GDW8E68",
         "GBD8F51",
         "GDW4J22",
@@ -20,20 +19,21 @@
         "GFD0J27",
         "GFI4G06",
         "GFP6H82",
-        "GGQ1C73",
-        "GGS6G25",
+        "GGQ1C73",     
         "GHL3A66",
-        "GHL8I11",
-        "GHY0D77",
-        "GII4G01",
-        "GIS9A85",
-        "GIE5D75",
-        "GBV8C54"
+        "GHL8I11", 
+        "GII4G01",        
+        "GIE5D75"
+        
     ],
     "Bitrem_5": [
        
     ],
     "Tritrem_5": [
+        "GGS6G25",
+        "GHY0D77",
+        "GGQ0E23",
+        "GBV8C54",
         "GJL7C45",
         "GHB1B84",
         "GEV3J57",
@@ -47,6 +47,7 @@
         "GCQ8I34"
     ],
     "Tritrem_6": [
+        "GIS9A85",
         "TIP8H46",
         "TKP5I53",
         "TMH7E74",
