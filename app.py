@@ -331,7 +331,7 @@ def carregar_fazendas():
 fazendas = carregar_fazendas()
 
 # Exibe apenas as 30 primeiras fazendas para o checkbox
-fazendas_para_checkbox = fazendas[:30]
+fazendas_para_checkbox = fazendas[:50]
 
 # Sidebar para seleção de fazendas
 st.sidebar.title("Seleção de Fazendas")
