@@ -5,7 +5,6 @@
         "GHA2A44",        
         "GDW8E68",
         "GBD8F51",
-        "GDW4J22",
         "GDR0J83",
         "GAN8H82",
         "GAQ2C35",
@@ -13,8 +12,7 @@
         "GEP2F46",
         "GFC2B18",
         "GFD0J27",
-        "GFI4G06",
-        "GFP6H82",
+        "GFI4G06",   
         "GGQ1C73",           
         "GHL8I11", 
         "GII4G01",        
@@ -25,6 +23,8 @@
        
     ],
     "Tritrem_5": [
+        "GDW4J22",
+        "GFP6H82",
         "GHM3H15",
         "GHO0H65",
         "GDW8E56",
